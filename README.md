@@ -31,11 +31,11 @@ Because there is no build step, you can run the app directly:
 
 ```bash
 # Clone the repository
-git clone https://github.com/tahaenasraoui-debug/makefud.git
-cd makefud
+git clone https://github.com/tahaenasraoui-debug/makefud-app.git
+cd makefud-app
 
 # Serve using Python (or any static HTTP server)
 python3 -m http.server 8000 --bind 127.0.0.1
 ```
 
-Then open http://localhost:8000.
+Then open http://localhost:8000 in your browser. Demo mode is on by default, so no API key is needed.
