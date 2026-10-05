@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>MakeFud: recipes from what's in your fridge</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Type what you have. Get recipes sorted by prep time, calories or ingredient count.">
+<meta name="theme-color" content="#2f5bea">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="MakeFud">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%A5%98%3C/text%3E%3C/svg%3E">
+<style>
+:root{--bg:#f1f5f4;--surface:#fff;--ink:#10231f;--muted:#5b6b66;--line:#d5dfdc;--accent:#2f5bea;--accent-ink:#fff;--warn:#b42318;--chip:#e4ebff;--time:#ffe9a8;--cal:#ffd9cf;--ing:#d3f1e3;--r:14px}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#0e1816;--surface:#16231f;--ink:#e8f1ee;--muted:#93a6a0;--line:#28403a;--accent:#7b9bff;--accent-ink:#0b1220;--warn:#ff8a7a;--chip:#22305c;--time:#4a3d12;--cal:#4a2418;--ing:#14402e}}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0)}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;padding:env(safe-area-inset-top,0) env(safe-area-inset-right,0) env(safe-area-inset-bottom,0) env(safe-area-inset-left,0)}
+button,input{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.wrap{max-width:1040px;margin:0 auto;padding:16px}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 0 16px}
+h1{margin:0;font-size:1.9rem;letter-spacing:-.03em;font-weight:800}
+h1 small{display:block;font-size:.9rem;font-weight:400;color:var(--muted);letter-spacing:0}
+.icon-btn{border:1px solid var(--line);background:var(--surface);border-radius:50%;width:44px;height:44px;cursor:pointer;font-size:1.2rem}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px}
+.tagbox{display:flex;flex-wrap:wrap;gap:8px;align-items:center;cursor:text}
+.tag{display:inline-flex;align-items:center;gap:6px;background:var(--chip);border-radius:999px;padding:4px 6px 4px 12px;font-size:.95rem}
+.tag button{border:0;background:transparent;cursor:pointer;width:22px;height:22px;border-radius:50%;line-height:1}
+.tag button:hover{background:var(--line)}
+#ing{flex:1;min-width:160px;border:0;background:transparent;padding:8px 4px;outline:none}
+.row{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;margin-top:12px}
+.primary{background:var(--accent);color:var(--accent-ink);border:0;border-radius:10px;padding:10px 18px;font-weight:700;cursor:pointer}
+.primary:disabled{opacity:.5;cursor:not-allowed}
+.ghost{background:transparent;border:1px solid var(--line);border-radius:10px;padding:10px 14px;cursor:pointer}
+.sortbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:18px 0 12px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--surface)}
+.seg button{border:0;background:transparent;padding:9px 14px;cursor:pointer}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button[aria-pressed=true]{background:var(--accent);color:var(--accent-ink);font-weight:700}
+.meta{color:var(--muted);font-size:.9rem;margin-left:auto}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;display:flex;flex-direction:column}
+.thumb{aspect-ratio:16/10;display:grid;place-items:center;font-size:3.4rem;background:var(--chip);object-fit:cover;width:100%}
+.body{padding:12px 14px 14px;display:flex;flex-direction:column;gap:10px;flex:1}
+.body h2{margin:0;font-size:1.05rem;line-height:1.3}
+.badges{display:flex;flex-wrap:wrap;gap:6px}
+.badge{font-size:.8rem;font-weight:600;border-radius:8px;padding:3px 8px;color:var(--ink)}
+.b-time{background:var(--time)}.b-cal{background:var(--cal)}.b-ing{background:var(--ing)}
+.missing{font-size:.88rem;color:var(--muted);margin:0}
+.missing b{color:var(--ink)}
+.go{margin-top:auto;font-weight:700;color:var(--accent);text-decoration:none}
+.go:hover{text-decoration:underline}
+.skel{height:300px;border-radius:var(--r);background:linear-gradient(100deg,var(--line) 30%,var(--surface) 50%,var(--line) 70%);background-size:300% 100%;animation:sh 1.3s linear infinite}
+@keyframes sh{to{background-position:-300% 0}}
+@media (prefers-reduced-motion:reduce){.skel{animation:none}}
+.state{text-align:center;padding:40px 16px;color:var(--muted)}
+.state .big{font-size:2.6rem}
+.state h3{margin:6px 0;color:var(--ink)}
+.error{border-color:var(--warn);color:var(--warn);text-align:left}
+.error h3{color:var(--warn);margin:0 0 4px}
+dialog{border:1px solid var(--line);border-radius:var(--r);background:var(--surface);color:var(--ink);padding:0;width:min(440px,calc(100vw - 24px));margin:0 0 0 auto;height:100%;max-height:100%;border-radius:var(--r) 0 0 var(--r)}
+dialog::backdrop{background:rgba(0,0,0,.45)}
+dialog form{padding:18px;display:flex;flex-direction:column;gap:14px}
+dialog label{font-weight:600;display:block;margin-bottom:6px}
+dialog input[type=password],dialog input[type=text]{width:100%;padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--bg)}
+.hint{font-size:.85rem;color:var(--muted);margin:0}
+.switch{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.switch input{appearance:none;width:46px;height:26px;border-radius:999px;background:var(--line);position:relative;cursor:pointer;transition:background .15s}
+.switch input::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:transform .15s}
+.switch input:checked{background:var(--accent)}
+.switch input:checked::after{transform:translateX(20px)}
+.pill{font-size:.8rem;background:var(--time);padding:2px 8px;border-radius:999px;color:var(--ink)}
+footer{color:var(--muted);font-size:.82rem;padding:28px 0 12px}
+footer a{color:inherit}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>MakeFud <small>Empty fridge? Type what you have.</small></h1>
+    <div style="display:flex;gap:10px;align-items:center">
+      <span class="pill" id="modePill" hidden>Demo data</span>
+      <button class="icon-btn" id="gear" aria-label="Open settings" title="Settings">&#9881;</button>
+    </div>
+  </header>
+
+  <section class="panel" aria-label="Ingredients">
+    <div class="tagbox" id="tagbox">
+      <span id="tags" style="display:contents"></span>
+      <input id="ing" type="text" placeholder="Add an ingredient, press Enter or comma" aria-label="Add an ingredient" autocomplete="off" enterkeyhint="done">
+    </div>
+    <div class="row">
+      <span class="hint">Try: egg, tomato, rice</span>
+      <button class="primary" id="go" disabled>Find recipes</button>
+    </div>
+  </section>
+
+  <div class="sortbar" id="sortbar" hidden>
+    <div class="seg" role="group" aria-label="Sort by">
+      <button data-k="time" aria-pressed="true">Time</button>
+      <button data-k="cal" aria-pressed="false">Calories</button>
+      <button data-k="ings" aria-pressed="false">Ingredients</button>
+    </div>
+    <button class="ghost" id="dir" aria-label="Toggle sort direction">Low to high</button>
+    <span class="meta" id="count"></span>
+  </div>
+
+  <main id="out" aria-live="polite">
+    <div class="state"><div class="big">&#129361;</div><h3>Nothing here yet</h3><p>Add two or three ingredients and press Find recipes.</p></div>
+  </main>
+
+  <footer>
+    Nutrition data is informational only, see <a href="DISCLAIMER.md">DISCLAIMER.md</a>.
+    Recipe data from <a href="https://spoonacular.com/food-api" target="_blank" rel="noopener">spoonacular API</a>. MIT licensed.
+  </footer>
+</div>
+
+<dialog id="settings">
+  <form method="dialog" id="sform">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <strong style="font-size:1.15rem">Settings</strong>
+      <button class="icon-btn" value="close" aria-label="Close settings">&times;</button>
+    </div>
+    <label class="switch" for="demo"><span>Use demo / mock data<br><span class="hint">No API key needed.</span></span><input type="checkbox" id="demo"></label>
+    <div>
+      <label for="key">Spoonacular API key</label>
+      <input type="password" id="key" autocomplete="off" spellcheck="false" placeholder="Paste your key">
+      <p class="hint">Get a free key at spoonacular.com/food-api. It is stored in this browser's localStorage as plain text and sent only to api.spoonacular.com. Do not use it on shared computers.</p>
+    </div>
+    <div style="display:flex;gap:10px">
+      <button type="button" class="primary" id="saveKey">Save key</button>
+      <button type="button" class="ghost" id="clearKey">Remove key</button>
+    </div>
+    <p class="hint" id="keyMsg" role="status"></p>
+  </form>
+</dialog>
+
+<script>
+"use strict";
+const $ = s => document.querySelector(s);
+const store = {
+  get(k){ try { return localStorage.getItem(k); } catch { return null; } },
+  set(k,v){ try { localStorage.setItem(k,v); } catch {} },
+  del(k){ try { localStorage.removeItem(k); } catch {} }
+};
+const esc = s => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+const MOCK = [
+ ["Veggie omelette","\u{1F373}",10,320,["egg","onion","tomato","cheese","butter","salt"]],
+ ["Garlic butter pasta","\u{1F35D}",20,540,["pasta","garlic","butter","parsley","parmesan","salt"]],
+ ["Tomato rice bowl","\u{1F35A}",25,410,["rice","tomato","onion","garlic","olive oil","salt"]],
+ ["Chickpea salad","\u{1F957}",10,290,["chickpeas","cucumber","tomato","lemon","olive oil","salt"]],
+ ["Potato hash","\u{1F954}",30,380,["potato","onion","egg","paprika","oil","salt"]],
+ ["Lentil soup","\u{1F372}",45,260,["lentils","carrot","onion","garlic","cumin","tomato","olive oil","salt"]],
+ ["Cheese quesadilla","\u{1F9C0}",12,450,["tortilla","cheese","onion","pepper"]],
+ ["Chicken stir fry","\u{1F357}",25,480,["chicken","bell pepper","onion","soy sauce","garlic","ginger","rice","oil"]],
+ ["Banana oat pancakes","\u{1F95E}",15,330,["banana","oats","egg","milk","cinnamon"]],
+ ["Tuna sandwich","\u{1F96A}",8,360,["tuna","bread","mayonnaise","onion","lettuce"]],
+ ["Shakshuka","\u{1F345}",30,340,["egg","tomato","onion","bell pepper","garlic","cumin","paprika","olive oil"]],
+ ["Mushroom risotto","\u{1F344}",40,520,["rice","mushroom","onion","parmesan","butter","garlic","broth"]]
+].map(([title,emoji,time,cal,ings],i)=>({id:"m"+i,title,emoji,time,cal,ings,url:"https://www.google.com/search?q="+encodeURIComponent(title+" recipe")}));
+
+const S = { tags:[], sort:"time", dir:"asc", recipes:[], loading:false, demo:false };
+const sing = w => w.toLowerCase().trim().replace(/(es|s)$/,"");
+const has = (tag, ing) => { const a = sing(tag), b = sing(ing); return a && b && (b.includes(a) || a.includes(b)); };
+
+function normalizeApi(r){
+  const cal = r.nutrition?.nutrients?.find(n => n.name === "Calories")?.amount;
+  const ings = [...new Set((r.extendedIngredients||[]).map(i => (i.name||"").toLowerCase()).filter(Boolean))];
+  return { id:r.id, title:r.title, image:r.image, time:r.readyInMinutes, cal:cal==null?null:Math.round(cal), ings, url:r.sourceUrl||r.spoonacularSourceUrl };
+}
+
+class ApiError extends Error { constructor(title,msg){ super(msg); this.title=title; } }
+
+async function fetchRecipes(){
+  if (S.demo) {
+    await new Promise(r => setTimeout(r, 350));
+    return MOCK.filter(r => S.tags.some(t => r.ings.some(i => has(t,i))));
+  }
+  const key = store.get("makefud.key");
+  if (!key) throw new ApiError("No API key", "Add your Spoonacular key in settings, or switch on demo data.");
+  const p = new URLSearchParams({ apiKey:key, includeIngredients:S.tags.join(","), addRecipeInformation:"true", addRecipeNutrition:"true", fillIngredients:"true", sort:"min-missing-ingredients", instructionsRequired:"true", number:"18" });
+  let res;
+  try { res = await fetch("https://api.spoonacular.com/recipes/complexSearch?" + p); }
+  catch { throw new ApiError("Network error", "Could not reach Spoonacular. Check your connection and try again."); }
+  if (res.status === 401 || res.status === 403) throw new ApiError("Invalid API key", "Spoonacular rejected the key. Re-enter it in settings.");
+  if (res.status === 402) throw new ApiError("Daily quota used up", "Your Spoonacular quota is exhausted. Wait for the daily reset, upgrade, or use demo data.");
+  if (res.status === 429) throw new ApiError("Too many requests", "Slow down and retry in a minute.");
+  if (!res.ok) throw new ApiError("Request failed", "Spoonacular returned status " + res.status + ".");
+  const data = await res.json();
+  return (data.results||[]).map(normalizeApi);
+}
+
+function sorted(){
+  const k = S.sort, d = S.dir === "asc" ? 1 : -1;
+  const val = r => k==="time" ? r.time : k==="cal" ? r.cal : r.ings.length;
+  return [...S.recipes].sort((a,b) => {
+    const x = val(a), y = val(b);
+    if (x == null && y == null) return 0;
+    if (x == null) return 1;
+    if (y == null) return -1;
+    return (x - y) * d;
+  });
+}
+
+function card(r){
+  const missing = r.ings.filter(i => !S.tags.some(t => has(t,i)));
+  const have = r.ings.length - missing.length;
+  const thumb = r.image ? `<img class="thumb" src="${esc(r.image)}" alt="" loading="lazy">` : `<div class="thumb" aria-hidden="true">${r.emoji||"\u{1F37D}"}</div>`;
+  const link = r.url ? `<a class="go" href="${esc(r.url)}" target="_blank" rel="noopener noreferrer">View instructions</a>` : "";
+  return `<article class="card">${thumb}<div class="body"><h2>${esc(r.title)}</h2>
+  <div class="badges"><span class="badge b-time">${r.time!=null?r.time+" min":"Time n/a"}</span><span class="badge b-cal">${r.cal!=null?r.cal+" kcal/serving":"Calories n/a"}</span><span class="badge b-ing">${r.ings.length} ingredients</span></div>
+  <p class="missing">${missing.length ? `<b>Missing ${missing.length} of ${r.ings.length}:</b> ${missing.map(esc).join(", ")}` : `<b>You have everything.</b>`}</p>${link}</div></article>`;
+}
+
+function render(){
+  const out = $("#out"), bar = $("#sortbar");
+  if (S.loading) { bar.hidden = true; out.innerHTML = `<div class="grid">${'<div class="skel"></div>'.repeat(6)}</div>`; return; }
+  if (!S.searched) { bar.hidden = true; return; }
+  if (!S.recipes.length) {
+    bar.hidden = true;
+    out.innerHTML = `<div class="state"><div class="big">&#128533;</div><h3>No recipes match</h3><p>Remove a tag or try more common ingredients like egg, rice or onion.</p></div>`;
+    return;
+  }
+  bar.hidden = false;
+  $("#count").textContent = S.recipes.length + " recipes";
+  out.innerHTML = `<div class="grid">${sorted().map(card).join("")}</div>`;
+}
+
+function renderTags(){
+  $("#tags").innerHTML = S.tags.map((t,i) => `<span class="tag">${esc(t)}<button type="button" data-i="${i}" aria-label="Remove ${esc(t)}">&times;</button></span>`).join("");
+  $("#go").disabled = !S.tags.length;
+}
+
+function addTag(raw){
+  const t = raw.replace(/,/g,"").trim().toLowerCase();
+  if (t && !S.tags.includes(t)) { S.tags.push(t); renderTags(); }
+  $("#ing").value = "";
+}
+
+async function search(){
+  if (!S.tags.length) return;
+  S.loading = true; S.searched = true; render();
+  try { S.recipes = await fetchRecipes(); S.loading = false; render(); }
+  catch (e) {
+    S.loading = false; S.recipes = [];
+    $("#sortbar").hidden = true;
+    $("#out").innerHTML = `<div class="state error"><h3>${esc(e.title||"Something went wrong")}</h3><p>${esc(e.title ? e.message : "Unexpected error. Try again.")}</p></div>`;
+  }
+}
+
+function syncMode(){
+  $("#modePill").hidden = !S.demo;
+  $("#demo").checked = S.demo;
+}
+
+$("#ing").addEventListener("keydown", e => {
+  if (e.key === "Enter" || e.key === ",") { e.preventDefault(); addTag(e.target.value); }
+  else if (e.key === "Backspace" && !e.target.value && S.tags.length) { S.tags.pop(); renderTags(); }
+});
+$("#ing").addEventListener("blur", e => addTag(e.target.value));
+$("#tagbox").addEventListener("click", e => {
+  const b = e.target.closest("button[data-i]");
+  if (b) { S.tags.splice(+b.dataset.i, 1); renderTags(); } else $("#ing").focus();
+});
+$("#go").addEventListener("click", () => { addTag($("#ing").value); search(); });
+
+$("#sortbar").addEventListener("click", e => {
+  const b = e.target.closest("button[data-k]");
+  if (!b) return;
+  S.sort = b.dataset.k;
+  document.querySelectorAll(".seg button").forEach(x => x.setAttribute("aria-pressed", x === b));
+  render();
+});
+$("#dir").addEventListener("click", e => {
+  S.dir = S.dir === "asc" ? "desc" : "asc";
+  e.target.textContent = S.dir === "asc" ? "Low to high" : "High to low";
+  render();
+});
+
+$("#gear").addEventListener("click", () => { $("#key").value = store.get("makefud.key") || ""; $("#keyMsg").textContent = ""; $("#settings").showModal(); });
+$("#demo").addEventListener("change", e => { S.demo = e.target.checked; store.set("makefud.demo", S.demo ? "1" : "0"); syncMode(); if (S.searched) search(); });
+$("#saveKey").addEventListener("click", () => {
+  const k = $("#key").value.trim();
+  if (!k) { $("#keyMsg").textContent = "Enter a key first."; return; }
+  store.set("makefud.key", k);
+  $("#keyMsg").textContent = "Key saved. Turn off demo data to use it.";
+});
+$("#clearKey").addEventListener("click", () => { store.del("makefud.key"); $("#key").value = ""; $("#keyMsg").textContent = "Key removed."; });
+$("#settings").addEventListener("click", e => { if (e.target === e.currentTarget) e.currentTarget.close(); });
+
+(function init(){
+  const d = store.get("makefud.demo");
+  S.demo = d === null ? !store.get("makefud.key") : d === "1";
+  syncMode(); renderTags();
+})();
+</script>
+</body>
+</html>
