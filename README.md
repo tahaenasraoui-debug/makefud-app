@@ -25,14 +25,17 @@ MakeFud is a zero-build, ultra-lean web application that turns whatever ingredie
 ---
 
 ## Quick Start
-
 ### 1. Run Locally
+
 Because there is no build step, you can run the app directly:
 
 ```bash
 # Clone the repository
-git clone [https://github.com/yourusername/makefud.git](https://github.com/yourusername/makefud.git)
+git clone https://github.com/tahaenasraoui-debug/makefud.git
 cd makefud
 
 # Serve using Python (or any static HTTP server)
-python3 -m http.server 8000
+python3 -m http.server 8000 --bind 127.0.0.1
+```
+
+Then open http://localhost:8000.
