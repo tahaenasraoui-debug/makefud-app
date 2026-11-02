@@ -1,4 +1,4 @@
-# MakeFud 🍳
+# MakeFud 
 
 > Empty fridge? Type what you have. Get recipes sorted by prep time, calories, or ingredient count.
 
